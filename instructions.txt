@@ -1,0 +1,12 @@
+cabal update
+cabal install Agda
+agda-mode setup
+agda-mode compile
+
+git clone https://github.com/agda/agda-stdlib.git
+cd ffi
+cabal install
+
+M-x customize-group
+agda2
+(open up Agda2 Include Dirs, click INS then type the directory /home/giles/Dropbox/ea/proof/agda-stdlib)
