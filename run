@@ -1,0 +1,2 @@
+#!/bin/bash
+agda Editor.agda --include-path ../agda-stdlib/src --include-path . -c
