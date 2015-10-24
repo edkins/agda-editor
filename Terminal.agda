@@ -12,6 +12,8 @@ open import Relation.Nullary.Decidable
 open import Function
 open import Data.List
 
+open import Util
+
 data TerminalState : Set where
   StateDefault : TerminalState
   StateEscape : String -> TerminalState
@@ -30,32 +32,8 @@ data TerminalScreen : Set where
 
 Terminal = Maybe (TerminalState × TerminalScreen)
 
-upd : {a : Set} → {n : ℕ} → Fin n → (a → a) → Vec a n → Vec a n
-upd zero f (x ∷ xs) = f x ∷ xs
-upd (suc n) f (x ∷ xs) = x ∷ upd n f xs
-
-ins : {a : Set} → {n : ℕ} → Fin n → a → Vec a n → Vec a n
-ins zero e xs = e ∷ init xs
-ins (suc n) e (x ∷ xs) = x ∷ ins n e xs
-
 gridWith : {a : Set} → {w : ℕ} → {h : ℕ} → Fin w → Fin h → a → Grid a w h → Grid a w h
 gridWith x y e grid = upd y (upd x (const e)) grid
-
-forceType : (a : Set) → a → a
-forceType t x = x
-
-next : {n : ℕ} → Fin n → Maybe (Fin n)
-next {0} impossible = nothing
-next {1} x = nothing
-next {suc (suc n)} zero = just (suc zero)
-next {suc (suc n)} (suc x) = case next x of λ
-  { nothing → nothing
-  ; (just y) → just (suc y)
-  }
-
-tozero : {n : ℕ} → Fin n → Fin n
-tozero {0} impossible = impossible
-tozero {suc n} x = zero
 
 screenPrint : Char → TerminalScreen → Maybe TerminalScreen
 screenPrint ch (Screen w h cx cy grid) =

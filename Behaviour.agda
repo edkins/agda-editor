@@ -1,6 +1,5 @@
-module Editor where
+module Behaviour where
 
-open import IO
 open import Data.Unit
 open import Data.List
 open import Data.Char
@@ -10,7 +9,7 @@ open import Data.Bool
 open import Relation.Nullary.Decidable
 
 open import Util
-open import Terminal
+
 
 Buffer = (ℕ × ℕ × ℕ × List Char)
 
@@ -29,7 +28,7 @@ listSplit p xs = let (ys , yss) = listSplit' p xs in
 EditorChar = (Char × Bool)
 
 isLineBreak : EditorChar → Bool
-isLineBreak (ch , _) = isNewLine ch
+isLineBreak (ch , _) = ⌊ ch Data.Char.≟ '\n' ⌋
 
 listLines : List EditorChar → List (List EditorChar)
 listLines es = listSplit isLineBreak es
@@ -42,11 +41,3 @@ annotate (c ∷ cs) (suc n) = (c , false) ∷ annotate cs n
 
 buffer_annotate : Buffer → List EditorChar
 buffer_annotate (w , h , pos , str) = annotate str pos
-
-scrubCursor : List (List EditorChar) → List (List Char)
-scrubCursor = Data.List.map (Data.List.map fst)
-
-mainIO : IO ⊤
-mainIO = putStrLn "Hello"
-
-main = run mainIO
