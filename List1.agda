@@ -2,6 +2,9 @@ module List1 where
 
 open import Data.List
 open import Data.Product
+open import Data.Nat
+open import Data.Fin
+open import Util
 
 {- A list containing at least one element -}
 
@@ -37,3 +40,14 @@ init' (x , xs) = init'' x xs
 append' : {a : Set} → List a → List' a → List' a
 append' [] ys = ys
 append' (x ∷ xs) ys = cons' x (append' xs ys)
+
+length' : {a : Set} → List' a → ℕ
+length' (x , xs) = suc (length xs)
+
+elem' : {a : Set} → (xs : List' a) → Fin (length' xs) → a
+elem' (x , xs) zero = x
+elem' (x , xs) (suc i) = elem xs i
+
+lset' : {a : Set} → (xs : List' a) → Fin (length' xs) → a → List' a
+lset' (x , xs) zero y = (y , xs)
+lset' (x , xs) (suc i) y = (x , lset xs i y)

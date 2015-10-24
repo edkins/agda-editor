@@ -13,18 +13,6 @@ open import Util
 
 Buffer = (ℕ × ℕ × ℕ × List Char)
 
-listSplit' : {a : Set} → (a → Bool) → List a → (List a × List (List a))
-listSplit' p [] = ( [] , [] )
-listSplit' p (x ∷ xs) = let (ys , yss) = listSplit' p xs in
-  if p x then
-    ([ x ] , ys ∷ yss)
-  else
-    (x ∷ ys , yss)
-
-listSplit : {a : Set} → (a → Bool) → List a → List (List a)
-listSplit p xs = let (ys , yss) = listSplit' p xs in
-  ys ∷ yss
-
 EditorChar = (Char × Bool)
 
 isLineBreak : EditorChar → Bool

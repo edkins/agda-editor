@@ -5,6 +5,7 @@ open import Data.Nat
 open import Data.Fin
 open import Data.Vec
 open import Data.Maybe
+open import Data.List
 open import Function
 
 upd : {a : Set} → {n : ℕ} → Fin n → (a → a) → Vec a n → Vec a n
@@ -28,8 +29,24 @@ tozero : {n : ℕ} → Fin n → Fin n
 tozero {0} impossible = impossible
 tozero {suc n} x = zero
 
+{-
 fst : {A : Set} → {B : Set} → (A × B) → A
 fst (x , _) = x
 
 snd : {A : Set} → {B : Set} → (A × B) → B
 snd (_ , y) = y
+-}
+
+elimFin0 : {a : Set} → Fin 0 → a
+elimFin0 ()
+
+elem : {a : Set} → (xs : List a) → Fin (length xs) → a
+elem [] n = elimFin0 n
+elem (x ∷ xs) zero = x
+elem (x ∷ xs) (suc n) = elem xs n
+
+lset : {a : Set} → (xs : List a) → Fin (length xs) → a → List a
+lset [] n _ = elimFin0 n
+lset (x ∷ xs) zero y = y ∷ xs
+lset (x ∷ xs) (suc i) y = x ∷ lset xs i y
+

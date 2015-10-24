@@ -27,4 +27,4 @@ lsappendlistSplit (just x ∷ xs) ys =
   let
     p0 = cong (hdcons x) (lsappendlistSplit xs ys)
     p1 = lsappendCons x (listSplit xs) (listSplit ys)
-  in {!trans p1 p0!}
+  in trans p1 p0
