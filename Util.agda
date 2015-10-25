@@ -1,7 +1,7 @@
 module Util where
 
 open import Data.Product
-open import Data.Nat using (ℕ; _≤_; suc; _+_; s≤s)
+open import Data.Nat using (ℕ; _≤_; suc; _+_; s≤s; pred)
 open import Data.Nat.Properties
 open import Data.Fin using (Fin; zero; suc; raise)
 open import Data.Vec using (Vec; init; _∷_)
@@ -83,11 +83,20 @@ elim0=s ()
   z + y ≡⟨ +-comm z y ⟩
   y + z ∎
 
+sucinj : (m : ℕ) → (n : ℕ) → suc m ≡ suc n → m ≡ n
+sucinj m n p0 = cong pred p0
+
+finsubst : {m : ℕ} → {n : ℕ} → m ≡ n → Fin m → Fin n
+finsubst {suc m} {suc n} p0 zero = zero
+finsubst {suc m} {suc n} p0 (suc k) = suc (finsubst (sucinj m n p0) k)
+finsubst {0} _ n = elimFin0 n
+finsubst {suc m} {0} p0 _ = elim0=s (sym p0)
+
 sum≤ :
   (xs : List ℕ) →
   (ys : List ℕ) →
   (p0 : length xs ≡ length ys) →
-  (∀ (i : Fin (length xs)) → elem xs i ≤ elem ys (subst Fin p0 i)) →
+  (∀ (i : Fin (length xs)) → elem xs i ≤ elem ys (finsubst p0 i)) →
   sum xs ≤ sum ys
 sum≤ [] [] p0 p1 = Data.Nat.z≤n
 sum≤ (x ∷ xs) (y ∷ ys) p0 p1 =
@@ -95,16 +104,16 @@ sum≤ (x ∷ xs) (y ∷ ys) p0 p1 =
     x<y = begin
       x ≡⟨ refl ⟩
       elem (x ∷ xs) zero ≤⟨ p1 zero ⟩
-      elem (y ∷ ys) (subst Fin p0 zero) ≡⟨ cong (elem (y ∷ ys)) refl ⟩
+      elem (y ∷ ys) (finsubst p0 zero) ≡⟨ refl ⟩
       elem (y ∷ ys) zero ≡⟨ refl ⟩
       y ∎
     p0' = cancel-+-left 1 p0
     p1' = λ i → begin
       elem xs i ≡⟨ refl ⟩
       elem (x ∷ xs) (raise 1 i) ≤⟨ p1 (raise 1 i) ⟩
-      elem (y ∷ ys) (subst Fin p0 (raise 1 i)) ≡⟨ cong (elem (y ∷ ys)) refl ⟩
-      elem (y ∷ ys) (raise 1 (subst Fin p0' i)) ≡⟨ refl ⟩
-      elem ys (subst Fin p0' i) ∎
+      elem (y ∷ ys) (finsubst p0 (raise 1 i)) ≡⟨ refl ⟩
+      elem (y ∷ ys) (raise 1 (finsubst p0' i)) ≡⟨ refl ⟩
+      elem ys (finsubst p0' i) ∎
     sx<sy = sum≤ xs ys p0' p1'
   in
   begin
