@@ -1,9 +1,10 @@
 module Util where
 
 open import Data.Product
-open import Data.Nat using (ℕ; _≤_; suc; _+_; s≤s; pred)
+open import Data.Nat using (ℕ; _≤_; suc; _+_; s≤s; pred; z≤n; _<_)
 open import Data.Nat.Properties
-open import Data.Fin using (Fin; zero; suc; raise)
+open import Data.Fin using (Fin; zero; suc; raise; toℕ; fromℕ)
+open import Data.Fin.Properties
 open import Data.Vec using (Vec; init; _∷_)
 open import Data.Maybe
 open import Data.List
@@ -33,14 +34,6 @@ next {suc (suc n)} (suc x) = case next x of λ
 tozero : {n : ℕ} → Fin n → Fin n
 tozero {0} impossible = impossible
 tozero {suc n} x = zero
-
-{-
-fst : {A : Set} → {B : Set} → (A × B) → A
-fst (x , _) = x
-
-snd : {A : Set} → {B : Set} → (A × B) → B
-snd (_ , y) = y
--}
 
 elimFin0 : {a : Set} → Fin 0 → a
 elimFin0 ()
@@ -83,12 +76,19 @@ elim0=s ()
   z + y ≡⟨ +-comm z y ⟩
   y + z ∎
 
-sucinj : (m : ℕ) → (n : ℕ) → suc m ≡ suc n → m ≡ n
-sucinj m n p0 = cong pred p0
+≤+≤ : {x : ℕ} → {y : ℕ} → {x' : ℕ} → {y' : ℕ} →
+  x ≤ x' → y ≤ y' → x + y ≤ x' + y'
+≤+≤ {x} {y} {x'} {y'} p0 p1 = begin
+  x + y ≤⟨ +≤ x p1 ⟩
+  x + y' ≤⟨ ≤+ y' p0 ⟩
+  x' + y' ∎
+
+sucinj : {m : ℕ} → {n : ℕ} → suc m ≡ suc n → m ≡ n
+sucinj p0 = cong pred p0
 
 finsubst : {m : ℕ} → {n : ℕ} → m ≡ n → Fin m → Fin n
 finsubst {suc m} {suc n} p0 zero = zero
-finsubst {suc m} {suc n} p0 (suc k) = suc (finsubst (sucinj m n p0) k)
+finsubst {suc m} {suc n} p0 (suc k) = suc (finsubst (sucinj p0) k)
 finsubst {0} _ n = elimFin0 n
 finsubst {suc m} {0} p0 _ = elim0=s (sym p0)
 
@@ -116,12 +116,23 @@ sum≤ (x ∷ xs) (y ∷ ys) p0 p1 =
       elem ys (finsubst p0' i) ∎
     sx<sy = sum≤ xs ys p0' p1'
   in
-  begin
-    sum (x ∷ xs) ≡⟨ refl ⟩
-    x + sum xs ≤⟨ ≤+ (sum xs) x<y ⟩
-    y + sum xs ≤⟨ +≤ y sx<sy ⟩
-    y + sum ys ≡⟨ refl ⟩
-    sum (y ∷ ys)
-  ∎
+    ≤+≤ x<y sx<sy
 sum≤ [] (y ∷ ys) p0 p1 = elim0=s p0
 sum≤ (x ∷ xs) [] p0 p1 = elim0=s (sym p0)
+
+≤-refl : (n : ℕ) → n ≤ n
+≤-refl 0 = z≤n
+≤-refl (suc n) = s≤s (≤-refl n)
+
+z<s : {n : ℕ} → 0 < suc n
+z<s {n} = s≤s z≤n
+
+s<s : {m : ℕ} → {n : ℕ} → m < n → suc m < suc n
+s<s = s≤s
+
+toℕ-suc : {n : ℕ} → (a : Fin n) → suc (toℕ a) ≡ toℕ (suc a)
+toℕ-suc a = refl
+
+fsucinj : {n : ℕ} → {a : Fin n} → {b : Fin n}
+  → suc a ≡ suc b → a ≡ b
+fsucinj {n} {a} {b} p0 = toℕ-injective (sucinj (cong toℕ p0))
