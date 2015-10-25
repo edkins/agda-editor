@@ -1,10 +1,12 @@
 module List1 where
 
 open import Data.List
+open import Data.List.Properties
 open import Data.Product
 open import Data.Nat using (ℕ; _≤_; suc)
 open import Data.Fin using (Fin; zero; suc)
-open import Util
+open import FinUtil
+open import ListUtil
 open import Relation.Binary.PropositionalEquality
 
 {- A list containing at least one element -}
@@ -58,6 +60,24 @@ fintake' (x , xs) n = fintake (x ∷ xs) n
 imap' : {a : Set} → {b : Set} → (xs : List' a) → (Fin (length' xs) → b) → List' b
 imap' (x , xs) f = (f zero , imap xs (λ n → f (suc n)))
 
+length-imap' : {a : Set} → {b : Set} → (xs : List' a) → (f : Fin (length' xs) → b) →
+  length' (imap' xs f) ≡ length' xs
+length-imap' (x , xs) f = cong suc (length-imap xs (λ n → f (suc n)))
+
+elem-imap' : {a : Set} → {b : Set} → (xs : List' a) → (f : Fin (length' xs) → b) → (i : Fin (length' xs)) →
+  elem' (imap' xs f) (finsubst (sym (length-imap' xs f)) i) ≡ f i
+elem-imap' (x , xs) f zero = refl
+elem-imap' (x , xs) f (suc i) = elem-imap xs (λ n → f (suc n)) i
+
+elem-imap-sym' : {a : Set} → {b : Set} → (xs : List' a) → (f : Fin (length' xs) → b) → (i : Fin (length' (imap' xs f))) →
+  elem' (imap' xs f) i ≡ f (finsubst (length-imap' xs f) i)
+elem-imap-sym' xs f i =
+  let
+    a=b = cong (elem' (imap' xs f)) (finsubst-subst (length-imap' xs f) (sym (length-imap' xs f)) i)
+    c=b = elem-imap' xs f (finsubst (length-imap' xs f) i)
+  in
+    trans (sym a=b) c=b
+
 sum' : List' ℕ → ℕ
 sum' (x , xs) = sum (x ∷ xs)
 
@@ -69,3 +89,14 @@ sum'≤ :
   sum' xs ≤ sum' ys
 sum'≤ (x , xs) (y , ys) p0 p1 =
   sum≤ (x ∷ xs) (y ∷ ys) p0 p1
+
+map' : {a : Set} → {b : Set} → (a → b) → List' a → List' b
+map' f (x , xs) = (f x , Data.List.map f xs)
+
+length-map' : {a : Set} → {b : Set} → (f : a → b) → (xs : List' a) →
+  length' (map' f xs) ≡ length' xs
+length-map' f (x , xs) = cong suc (length-map f xs)
+
+elem-map' : {a : Set} → {b : Set} → (f : a → b) → (xs : List' a) → (i : Fin (length' xs)) →
+  elem' (map' f xs) (finsubst (sym (length-map' f xs)) i) ≡ f (elem' xs i)
+elem-map' f (x , xs) i = elem-map f (x ∷ xs) i

@@ -1,4 +1,4 @@
-module ListIns where
+module RowCol where
 
 open import Data.List
 open import Data.Fin using (Fin; zero; suc; inject₁; fromℕ; toℕ; compare; less; equal; greater; _<_)
@@ -18,11 +18,6 @@ open import ListsAppend
 open import ListUtil
 open import List1
 open import Lists
-
-lins : {a : Set} → (xs : List a) → Fin (suc (length xs)) → a → List a
-lins xs zero y = y ∷ xs
-lins (x ∷ xs) (suc n) y = x ∷ lins xs n y
-lins [] (suc n) _ = elimFin0 n
 
 Row : {a : Set} → (xss : Lists a) → Set
 Row xss = Fin (length' xss)
@@ -122,16 +117,3 @@ charIndex xss (i , j) =
     p0 = sum'≤ yss lss ly=ll p1
   in
     {!!}
-
-lsins : {a : Set} → (xss : Lists a) → RowCol xss → a → Lists a
-lsins xss (i , j) x =
-  let
-    row = elem' xss i
-    row' = lins row j x
-  in
-    lset' xss i row'
-
-{-
-lsinsUnsplit : {a : Set} → {xss : Lists a} → (i : Fin (length' xss)) → (j : Fin (suc (length (elem' xss i)))) → (x : a) →
-  listUnsplit (lsins xss i j x) ≡ 
--}
