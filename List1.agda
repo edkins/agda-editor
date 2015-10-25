@@ -2,9 +2,10 @@ module List1 where
 
 open import Data.List
 open import Data.Product
-open import Data.Nat
-open import Data.Fin
+open import Data.Nat using (ℕ; _≤_; suc)
+open import Data.Fin using (Fin; zero; suc)
 open import Util
+open import Relation.Binary.PropositionalEquality
 
 {- A list containing at least one element -}
 
@@ -51,3 +52,22 @@ elem' (x , xs) (suc i) = elem xs i
 lset' : {a : Set} → (xs : List' a) → Fin (length' xs) → a → List' a
 lset' (x , xs) zero y = (y , xs)
 lset' (x , xs) (suc i) y = (x , lset xs i y)
+
+fintake' : {a : Set} → (xs : List' a) → Fin (suc (length' xs)) → List a
+fintake' (x , xs) zero = []
+fintake' (x , xs) (suc n) = x ∷ fintake xs n
+
+imap' : {a : Set} → {b : Set} → (xs : List' a) → (Fin (length' xs) → b) → List' b
+imap' (x , xs) f = (f zero , imap xs (λ n → f (suc n)))
+
+sum' : List' ℕ → ℕ
+sum' (x , xs) = x Data.Nat.+ sum xs
+
+sum'≤ :
+  (xs : List' ℕ) →
+  (ys : List' ℕ) →
+  (p0 : length' xs ≡ length' ys) →
+  (∀ (i : Fin (length' xs)) → elem' xs i ≤ elem' ys ?) →
+  sum' xs ≤ sum' ys
+sum'≤ (x , []) (y , []) = ?
+sum'≤ (x , x' ∷ xs) (y , y' ∷ ys) = ?
