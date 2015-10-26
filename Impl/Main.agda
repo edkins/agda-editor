@@ -6,7 +6,9 @@ import IO.Primitive
 open import Coinduction
 open import Data.Colist
 open import Data.Char using (Char)
+open import Data.Bool using (Bool; false; true)
 
+open import MyIO
 open import Behaviour
 
 double : Colist Char → Colist Char
@@ -15,7 +17,10 @@ double (c ∷ cs) = c ∷ ♯('\n' ∷ ♯ (double (♭ cs)))
 
 mainIO : IO ⊤
 mainIO =
-  ♯ getContents >>= λ str →
+  ♯(♯(♯(♯ hSetBufferingOut false >>
+  ♯ hSetBufferingIn false) >>
+  ♯ hSetEcho false) >>
+  ♯ getContents) >>= λ str →
   ♯ putStr∞ (double str)
 
 main : IO.Primitive.IO ⊤

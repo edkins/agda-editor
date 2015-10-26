@@ -1,4 +1,4 @@
 #!/bin/bash
-agda Impl/Main.agda --include-path ../agda-stdlib/src --include-path . -c && echo "Starting..." && stty -echo -icanon && ./Main
-stty echo icanon
+agda Impl/Main.agda --include-path ../agda-stdlib/src --include-path . -c && echo "Starting..." && ./Main
+
 
