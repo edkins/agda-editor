@@ -5,9 +5,10 @@ open import Data.Nat using (ℕ; _≤_; suc)
 open import Data.Nat.Properties
 open import Data.Nat.Properties.Simple
 open import Data.Fin using (Fin; zero; suc)
-open import Data.Vec using (Vec; _∷_; init)
+open import Data.Vec using (Vec; _∷_; init; [])
 open import Data.List using (List; length; _∷_; map; sum; [])
 open import Data.List.Properties
+open import Data.Product using (_×_; _,_)
 open Data.Nat.≤-Reasoning
 open import FinUtil
 
@@ -18,6 +19,11 @@ upd (suc n) f (x ∷ xs) = x ∷ upd n f xs
 ins : {a : Set} → {n : ℕ} → Fin n → a → Vec a n → Vec a n
 ins zero e xs = e ∷ init xs
 ins (suc n) e (x ∷ xs) = x ∷ ins n e xs
+
+ins+ : {a : Set} → {n : ℕ} → Fin (suc n) → a → Vec a n → Vec a (suc n)
+ins+ zero e xs = e ∷ xs
+ins+ (suc n) e [] = elimFin0 n
+ins+ (suc n) e (x ∷ xs) = x ∷ ins+ n e xs
 
 elem : {a : Set} → (xs : List a) → Fin (length xs) → a
 elem [] n = elimFin0 n
@@ -85,3 +91,26 @@ sum≤ (x ∷ xs) (y ∷ ys) p0 p1 =
     ≤+≤ x<y sx<sy
 sum≤ [] (y ∷ ys) p0 p1 = elim0=s p0
 sum≤ (x ∷ xs) [] p0 p1 = elim0=s (sym p0)
+
+mapIndices' : {a : Set} → {b : Set} →
+  (a → ℕ → b) → List a → ℕ → List b
+mapIndices' f [] i = []
+mapIndices' f (x ∷ xs) i = f x i ∷ mapIndices' f xs (suc i)
+
+mapIndices : {a : Set} → {b : Set} →
+  (a → ℕ → b) → List a → List b
+mapIndices f xs = mapIndices' f xs 0
+
+withIndices : {a : Set} → List a → List (a × ℕ)
+withIndices xs = mapIndices _,_ xs
+
+vecTake : {a : Set} →
+  (n : ℕ) → a → List a → Vec a n
+vecTake 0 _ _ = []
+vecTake (suc n) x [] = x ∷ vecTake n x []
+vecTake (suc n) x (y ∷ ys) = y ∷ vecTake n x ys
+
+lins : {a : Set} → (xs : List a) → Fin (suc (length xs)) → a → List a
+lins xs zero y = y ∷ xs
+lins (x ∷ xs) (suc n) y = x ∷ lins xs n y
+lins [] (suc n) _ = elimFin0 n
