@@ -3,20 +3,26 @@ module InputBehaviour where
 open import Data.Char using (Char)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Maybe using (Maybe; nothing; just)
+open import Data.Nat using (ℕ)
 open import Function
 
 open import BufferBehaviour
 open import KeyboardBehaviour
 
+data InputEvent : Set where
+  InputKey : Key → InputEvent
+
 data InputMode : Set where
   DefaultMode : InputMode
+
+initialMode = DefaultMode
 
 data InputCommand : Set where
   InsertChar : Char → InputCommand
   Nop : InputCommand
 
-InputState : Set
-InputState = (InputMode × Buffer)
+FullState : Set
+FullState = (InputMode × Window)
 
 getKeyCommand : Key → InputMode → (InputMode × InputCommand)
 getKeyCommand k DefaultMode = case getKeyChar k of λ{
@@ -24,19 +30,25 @@ getKeyCommand k DefaultMode = case getKeyChar k of λ{
   ; nothing → (DefaultMode , Nop)
   }
 
-bufferCommand : InputCommand → Buffer → Buffer
-bufferCommand (InsertChar ch) buf = bufferInsertAtCursor ch buf
-bufferCommand Nop buf = buf
+windowCommand : InputCommand → Window → Window
+windowCommand (InsertChar ch) (buf , w , h) = (bufferInsertAtCursor ch buf , w , h)
+windowCommand Nop win = win
 
 -------------
 
-getCurrentBuffer : InputState → Buffer
-getCurrentBuffer = proj₂
+getCurrentWindow : FullState → Window
+getCurrentWindow = proj₂
 
-handleKey : Key → InputState → InputState
-handleKey k (mode , buffer) =
+handleKey : Key → FullState → FullState
+handleKey k (mode , window) =
   let
     (mode' , cmd) = getKeyCommand k mode
-    buffer' = bufferCommand cmd buffer
+    window' = windowCommand cmd window
   in
-    (mode' , buffer')
+    (mode' , window')
+
+handleInput : InputEvent → FullState → FullState
+handleInput (InputKey k) state = handleKey k state
+
+initialState : ℕ → ℕ → FullState
+initialState w h = (initialMode , initialWindow w h)

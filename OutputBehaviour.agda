@@ -2,22 +2,25 @@ module OutputBehaviour where
 
 open import Data.List using (List; map; _∷_; [])
 open import Data.Char using (Char)
-open import Data.Nat using (ℕ; _+_; _≟_)
+open import Data.Nat using (ℕ; _+_; _≟_; suc)
 open import Data.Nat.DivMod
 open import Data.Product using (_×_; _,_; proj₁; Σ)
 open import Data.Bool using (Bool; if_then_else_; false; true)
-open import Data.Fin using (Fin; toℕ)
-open import Relation.Nullary.Decidable using (⌊_⌋; False)
-open import Data.Vec using (replicate)
+open import Data.Fin using (Fin; toℕ; zero)
+open import Relation.Nullary.Decidable using (⌊_⌋; False; fromWitnessFalse)
+open import Relation.Binary.PropositionalEquality using (_≡_; subst; sym)
+open import Relation.Nullary using (yes; no)
+open import Data.Vec using (Vec; replicate; [])
 open import Function
 
 open import ListUtil
+open import FinUtil
 open import Lists
 open import TermBehaviour
 open import BufferBehaviour
 
--- Annotated with width and height
-Window = Buffer × ℕ × ℕ
+data OutputSignals : Set where
+  Outputs : (w : ℕ) → (h : ℕ) → Visual w h → OutputSignals
 
 withXY' : {a : Set} →
   ℕ → ℕ → (a → Bool) → List a → List (a × ℕ × ℕ)
@@ -88,3 +91,14 @@ bufferVisual w {w≠0} h buf =
     grid = vecTake h emptyRow rows
   in
     VisualS w h grid
+
+vec0 : {a : Set} → {n : ℕ} → n ≡ 0 → Vec a n
+vec0 {a} {0} _ = []
+vec0 {a} {suc n} p = elim0=s (sym p)
+
+windowOutputs : (win : Window) → OutputSignals
+windowOutputs (buf , w , h) = Outputs w h (
+  case w ≟ 0 of λ{
+    (yes w=0) → VisualS w h (replicate (vec0 w=0))
+  ; (no w≠0) → bufferVisual w {fromWitnessFalse w≠0} h buf
+  })

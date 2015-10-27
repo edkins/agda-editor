@@ -10,6 +10,7 @@ open import Data.Bool using (Bool; false; true)
 
 open import MyIO
 open import Behaviour
+open import Impl.Editor
 
 double : Colist Char → Colist Char
 double [] = []
