@@ -1,0 +1,103 @@
+A module consists of:
+- An input type
+- An output type
+- A state type
+- Submodules
+- A function mapping input sequences to output sequences
+
+Modules can be composed:
+- by attaching inputs to outputs
+- by injecting submodules
+
+Modules can be "reimplemented". This means supplying a completely new module, that still exhibits the same outward behaviour.
+
+Modules that contain submodules accept a reimplementation layer. The default thing to do is to pass in the identity function as the reimplementation layer.
+
+How do "antimodules" work? By this I mean things that sit outside our actual code base that describe how the rest of the system works. For instance, the terminal.
+
+------------------------
+
+Imagine our program as a chain of functions. Each function takes a colist of input events and returns a colist of output events. We could prove that two programs have identical behaviour by proving that each step in the chain is equal.
+
+But this isn't good enough. We also want to be able to change the communication protocols between the layers. Can we do this with some kind of abstract datatype system? Each layer is parameterized by an abstract datatype.
+
+For example:
+
+takes_concrete : Maybe Int -> Bool
+
+data MaybeIntType :
+   MaybeIntT : (T : Set) -> (Nthg : T) -> (Jst : Nat -> T)
+     -> (unpack : (A : Set) -> T -> A -> (N -> A) -> A)
+     -> MaybeIntT
+   
+
+takes_abstract : (MI : MaybeIntType) -> (B : BoolType) ->
+    GetMaybeInt MI -> GetBool B
+
+
+This seems unsatisfactory. We may want more flexibility in how we interpret the abstract type.
+
+Case study: the text editor line breaker
+
+Abstract input: Colist (List Char)
+Abstract output: Colist (List (List Char))
+
+Concrete I/O: diffs (individual characters to insert/delete)
+
+You can recover the abstract from the concrete in this case, but not vice-versa.
+
+The way I'm thinking of it in this moment is: a function has access to information that it's not supposed to have, and uses it to choose between two identical alternatives.
+
+This may all be overthinking.
+
+f : A -> B
+g : B -> C
+h : C -> D
+program x = h (g (f x))
+
+f' : A -> B'
+g' : B' -> C'
+h' : C' -> D
+program' x = h' (g' (f' x))
+
+b : B' -> B
+c : C' -> C
+
+where
+  f     = b . f'     : A -> B
+  g . b = c . g'     : B' -> C
+  h . c = h'         : C' -> D
+
+hence
+  program = h . g . f
+          = h . g . b . f'
+	  = h . c . g' . f'
+	  = h' . g' . f'
+	  = program'
+	  
+We can do similar kinds of transformations when higher order functions come into play, for instance
+
+  foldconcat : (A -> S -> (S,List B)) -> Colist A -> S -> Colist B
+  foldconcat f [] s = []
+  foldconcat f (x::xs) s =
+    let (s', ys) = f x in
+    ys ++ foldconcat f xs s
+
+This foldconcat function is how we turn state-manipulator functions into functions that operate on colists.
+
+Now suppose we have:
+  a : A' -> A
+  b : B' -> B
+  s : S' -> S
+  f : A -> S -> (S,List B)
+  f' : A' -> S' -> (S',List B')
+where for all i:A', k:S' we have
+  f (a i) (s k) = s (proj1 (f' i k)), b (proj2 (f' i k))
+
+Then
+  foldconcat f (map a is) (s k) = map b (foldconcat f' is k)
+
+
+There's probably some category theory explaining when this works and when it doesn't.
+
+In this case at least it helps with modularity, because we can hide whatever it is that we've done to the state type. (This isn't quite true because we still need to supply a (modified) initial state, but we can hide what we've done to states that aren't initial).

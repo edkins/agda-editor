@@ -8,10 +8,6 @@ open import Data.Nat using (ℕ)
 open import OutputBehaviour
 open import InputBehaviour
 
-data OutputCommand : Set where
-  OutputText : List Char → OutputCommand
-  OutputQuit : OutputCommand
-
 data Environment : Set where
   Env : ℕ → ℕ → Environment
 

@@ -1,10 +1,10 @@
 module ListUtil where
 
 open import Relation.Binary.PropositionalEquality
-open import Data.Nat using (ℕ; _≤_; suc)
+open import Data.Nat using (ℕ; _≤_; suc; _∸_)
 open import Data.Nat.Properties
 open import Data.Nat.Properties.Simple
-open import Data.Fin using (Fin; zero; suc)
+open import Data.Fin using (Fin; zero; suc; toℕ)
 open import Data.Vec using (Vec; _∷_; init; [])
 open import Data.List using (List; length; _∷_; map; sum; [])
 open import Data.List.Properties
@@ -109,6 +109,16 @@ vecTake : {a : Set} →
 vecTake 0 _ _ = []
 vecTake (suc n) x [] = x ∷ vecTake n x []
 vecTake (suc n) x (y ∷ ys) = y ∷ vecTake n x ys
+
+vtake : {a : Set} → {n : ℕ} → Vec a n → (m : Fin (suc n)) → Vec a (toℕ m)
+vtake xs zero = []
+vtake [] (suc m) = elimFin0 m
+vtake (x ∷ xs) (suc m) = x ∷ vtake xs m
+
+vdrop : {a : Set} → {n : ℕ} → Vec a n → (m : Fin (suc n)) → Vec a (n ∸ toℕ m)
+vdrop xs zero = xs
+vdrop [] (suc m) = elimFin0 m
+vdrop (x ∷ xs) (suc m) = vdrop xs m
 
 lins : {a : Set} → (xs : List a) → Fin (suc (length xs)) → a → List a
 lins xs zero y = y ∷ xs
