@@ -3,10 +3,12 @@ module Miscellaneous where
 open import Data.Fin using (Fin; raise; toℕ; inject+; inject₁; fromℕ; zero; suc; pred) renaming (_+_ to _F+_)
 open import Data.Integer using (ℤ; +_) renaming (_+_ to _I+_)
 open import Data.Vec using (Vec; _++_; lookup)
-open import Data.Nat using (ℕ; _+_; _∸_; suc)
+open import Data.Nat using (ℕ; _+_; _∸_; suc; _≤_; _≰_; ≤-pred; z≤n; s≤s)
+open import Data.Nat.Properties using (1+n≰n)
 open import Data.Char using (Char)
 open import Function using (case_of_)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong)
+open import Relation.Binary.Core using (Transitive)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym; subst; trans)
 open import Relation.Nullary using (yes; no; Dec; ¬_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
@@ -21,29 +23,37 @@ NaturalNumberNoLargerThan n = Fin (suc n)
 reconsider_because_ : {a : Set} → {p : Set} → ¬ p → p → a
 reconsider_because_ ¬p p = ⊥-elim (¬p p)
 
+reconsider_against_ : {a : Set} → {p : Set} → p → ¬ p → a
+reconsider_against_ p ¬p = ⊥-elim (¬p p)
+
 reconsider_becauseRangeIsZero : {a : Set} → Fin 0 → a
 reconsider_becauseRangeIsZero ()
 
 propertyOf : Set → Set₁
 propertyOf x = x → Set
 
+zeroIsNotASuccessor : {n : ℕ} → (x : Fin n) → zero ≢ suc x
+zeroIsNotASuccessor x ()
+
+antisuccessor : {n : ℕ} → Fin (suc (suc n)) → Fin (suc n)
+antisuccessor zero = zero
+antisuccessor (suc n) = n
+
+successorsAreEqual : {n : ℕ} → (x : Fin (suc n)) → (y : Fin (suc n)) → (p : (Data.Fin.suc x) ≡ (Data.Fin.suc y)) → x ≡ y
+successorsAreEqual x y p = cong antisuccessor p
+
 predecessorOf_whichExistsBecause_ : {n : ℕ} → (x : Fin (suc n)) → x ≢ zero → Fin (suc n)
 predecessorOf_whichExistsBecause_ zero p = ⊥-elim (p refl)
-predecessorOf_whichExistsBecause_ (suc n) _ = inject₁ n
+predecessorOf_whichExistsBecause_ (suc x) p = inject₁ x
 
---applyFunction_toBothSidesOf_observingThat_and_ : {a : Set} → {b : Set} → {p : propertyOf a} → {x : a} → {y : a} →
---  (f : (z : a) → p z → b) → (x ≡ y) → (px : p x) → (py : p y) → f x px ≡ f y py
---applyFunction_toBothSidesOf_observingThat_and_ f eq px py = {!!}
-
-zeroIsNotASuccessor : {n : ℕ} → {x : Fin n} → zero ≢ suc x
-zeroIsNotASuccessor ()
-
-successorsAreEqual : {n : ℕ} → (x : Fin n) → (y : Fin n) → (p : suc {n} x ≡ suc {n} y) → x ≡ y
-successorsAreEqual {0} x y p = reconsider x becauseRangeIsZero
-successorsAreEqual {suc n} x y p = cong (pred {suc n}) p
+{-predecessorProofIrrelevance : {n : ℕ} → (x : Fin (suc n)) → (y : Fin (suc n)) → x ≡ y → (px : x ≢ zero) → (py : y ≢ zero) →
+  predecessorOf x whichExistsBecause px ≡ predecessorOf y whichExistsBecause py
+predecessorProofIrrelevance zero y p x≠0 y≠0 = reconsider x≠0 becausue refl
+predecessorProofIrrelevance (suc x) zero p x≠0 y≠0 = reconsider y≠0 because refl
+predecessorProofIrrelevance (suc x) (suc y) p x≠0 y≠0 = cong suc (predecessorProofIrrelevance x y -}
 
 inject₁≠max : {n : ℕ} → (x : Fin n) → inject₁ x ≢ fromℕ n
-inject₁≠max {suc n} zero = λ p → (zeroIsNotASuccessor {suc n} {fromℕ n}) p
+inject₁≠max {suc n} zero = λ p → (zeroIsNotASuccessor (fromℕ n)) p
 inject₁≠max {suc n} (suc x) = λ p → inject₁≠max x (successorsAreEqual (inject₁ x) (fromℕ n) p)
 
 predecessorIsNotMaxGiven : {n : ℕ} → {x : Fin (suc n)} → (x≠0 : x ≢ zero) →
@@ -69,3 +79,17 @@ checkWhether question f g = case question of λ{
   (yes itIs) → f itIs
   ; (no itIsnt) → g itIsnt
   }
+
+≤-trans : Transitive _≤_
+≤-trans z≤n       _         = z≤n
+≤-trans (s≤s m≤n) (s≤s n≤o) = s≤s (≤-trans m≤n n≤o)
+
+sucNotLessThanZero : {i : ℕ} → suc i ≰ 0
+sucNotLessThanZero {i} = λ si≤0 →
+  let si≤i = ≤-trans si≤0 (z≤n {i}) in
+  reconsider si≤i against 1+n≰n
+
+_isWithinRange_ : {n : ℕ} → (i : ℕ) → i ≤ n → Fin (suc n)
+_isWithinRange_ {n} 0 p = zero
+_isWithinRange_ {0} (suc i) p = reconsider p against sucNotLessThanZero
+_isWithinRange_ {suc n} (suc i) p = suc (i isWithinRange (≤-pred p))

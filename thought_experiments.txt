@@ -1,0 +1,52 @@
+How much should be carried along with the type of a function?
+
+For example: the function multiplyByTwo always returns an even integer. Do we care? Sometimes we do and sometimes we don't. We can get around this with the concept of subtypes: the function returns EvenInteger which is a subtype of Integer.
+
+The function multiplyByThree returns an even integer if the input is even and an odd integer if the input is odd. We can still handle this with dependent types and subtypes, but it's going to get more awkward because there's so much more information to carry around.
+
+One alternative is to not include this as part of the type information at all, and if we need to use it then just prove separate theorems based on the function definition. The problem with this is it's less modular: when we define a function we also have to define a cloud of theorems describing its behaviour in various different circumstances. It would be cleaner to just let the function be a self-contained package.
+
+So here's what I'm proposing.
+
+Each function has an "assistant" that runs at compile time. The assistant is responsible for extracting as much relevant available information from the input arguments as possible, and using this to build a suitable output type. (Or it might work the other way around: the assistant sees how much granularity is needed for the output type and interrogates the input values accordingly).
+
+There are two basic levels of granularity:
+- Basic types
+- Values
+
+But you can define extra ones in between.
+
+So what's the mathematics behind this?
+
+Imagine a function as a set of pairs f = {(x0,y0), (x1,y1), ...}. The x's are all distinct. Dom f is the set of x's.
+
+The function is consistent with a product type Π d t if:
+- d ⊆ Dom f
+- ∀ x ∈ d, f x ∈ t x
+
+So the product type consists of a domain set together with an indexed family of codomain sets. In the case of a non-dependent function the indexed family is constant.
+
+This is mostly just how dependent type languages work. What's new is that we're merely saying the function is *consistent* with this type. It may be consistent with other types too.
+
+What would this look like?
+
+multiplyBy3
+: ℤ → ℤ
+: ℕ → ℕ
+: even → even
+: odd → odd
+: (x : ℤ) → {x * 3}
+
+One problem might be I'm trying to do two things at once here: overloaded functions (which can have irregularly shaped domains), and type refinement (where the overall domain is clearly defined but extra information feeds into the codomain).
+
+_+_
+: ℤ → ℤ → ℤ
+: ℕ → ℕ → ℕ
+: ℝ → ℝ → ℝ
+: {R : ring} → R → R → R
+
+One problem with _+_ is that it's extensible: as you add new types which have a + operation, the domain of _+_ will grow. This might not be a problem if _+_ is initially defined to have a very broad domain, covering types which haven't been referenced yet. Then when you "define" a type, you're not actually creating a new one but simply referencing something which already exists.
+
+Set theory doesn't quite handle algebraic structures correctly. Or maybe it does but we need to be careful about it. It has a concept of subsets, but structures such as groups are defined as a tuple (G, op). There are two directions of inclusion now: one structure can be a substructure of another, or it can be a weaker type of structure (abelian groups versus groups for example).
+
+When you define a superset of something, it might be convenient to redefine the set-theoretic implementation of the smaller set. For example, if you're only considering natural numbers, it makes sense to define 0 as {}, 1 as {0}, 2 as {0,1} etc. But once you're considering all integers, you'd want to switch to a different implementation.
