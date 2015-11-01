@@ -8,7 +8,7 @@ open import Data.Nat using (ℕ; _+_; _∸_; suc; _≤_; _≤?_)
 open import Data.Char using (Char)
 open import Function using (case_of_)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong)
-open import Relation.Unary renaming (Decidable to _isDecidableProperty)
+open import Relation.Unary using (Decidable)
 open import Relation.Nullary using (yes; no; Dec; ¬_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤)
@@ -64,49 +64,19 @@ _atTheStartOfALine x =
       ch = characterAt x' whichExistsBecause (predecessorIsNotAtTheEndGiven xIsNotAtTheStart)
     in (ch ≡ '\n'))
 
-countDownFrom_until_ :
-   ℕ →
-   {p : propertyOf ℕ} →
-   ((y : ℕ) → Dec (p y)) →
-   ℕ
+bufferPositions = finitelyCountUpTo bufferLength
 
-countDownFrom_until_ 0 _hasProperty = 0
+_doesNotOccurAfter_ : (x : PositionWithinTheBuffer) → (y : PositionWithinTheBuffer) → Dec (
 
-countDownFrom_until_ (suc n) _hasProperty =
-  checkWhether ((suc n) hasProperty)
-    (λ nHasProperty → suc n)
-    (λ otherwise → countDownFrom n until _hasProperty)
-
-position_existsBecause_ : (n : ℕ) → (n ≤ bufferLength) → PositionWithinTheBuffer
-position_existsBecause_ n n≤len = n isWithinRange n≤len
-
-_asPropertyOfℕ : propertyOf PositionWithinTheBuffer → propertyOf ℕ
-_asPropertyOfℕ p = λ n →
-  checkWhether (n ≤? bufferLength)
-    (λ n≤len → p (position n existsBecause n≤len))
-    (λ otherwise → ⊥)
-
---decProp₁ : {p : propertyOf PositionWithinTheBuffer} →
---  p isDecidableProperty → (n : ℕ) → n ≤ bufferLength → Dec ((p asPropertyOfℕ) n)
---decProp₁ p n n≤len = p (position n existsBecause n≤len)
-
-
-_asDecidablePropertyOfℕ : {p : propertyOf PositionWithinTheBuffer} →
-  p isDecidableProperty → (p asPropertyOfℕ) isDecidableProperty
-_asDecidablePropertyOfℕ {P} p = λ n →
-  checkWhether (n ≤? bufferLength)
-    (λ n≤len →
-      checkWhether (p (position n existsBecause n≤len))
-        (λ pIsTrue → {!!})
-        (λ pIsFalse → {!!})
-    )
-    (λ otherwise → {!!})
-
-searchBackwardsFrom_until_ :
+searchBackwardsFrom_until_whichIsTrueAtTheStartBecause_ :
    (x : PositionWithinTheBuffer) →
    {p : propertyOf PositionWithinTheBuffer} →
-   p isDecidableProperty →
+   Decidable p →
+   p theStartOfTheBuffer →
    PositionWithinTheBuffer
-searchBackwardsFrom_until_ x property =
-  let n = countDownFrom (toℕ x) until (property asDecidablePropertyOfℕ)
-  in {!!}
+searchBackwardsFrom_until_whichIsTrueAtTheStartBecause_ x p pStart =
+  let
+    p' y = (y ≤? x) *and* (p x)
+    candidates = elementsOf bufferPositions whichSatisfy p'
+  in
+    lastOf candidates whichExistsBecause consIsNotEmpty

@@ -10,9 +10,11 @@ open import Function using (case_of_)
 open import Relation.Binary.Core using (Transitive)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym; subst; trans)
 open import Relation.Nullary using (yes; no; Dec; ¬_)
+open import Relation.Unary using (Decidable)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
-open import Data.Product using (_×_; _,_; Σ)
+open import Data.Product using (_×_; _,_; Σ; proj₁; proj₂)
+open import Data.List using (List; []; _∷_; map)
 
 BufferOfLength : ℕ → Set
 BufferOfLength n = Vec Char n
@@ -93,3 +95,28 @@ _isWithinRange_ : {n : ℕ} → (i : ℕ) → i ≤ n → Fin (suc n)
 _isWithinRange_ {n} 0 p = zero
 _isWithinRange_ {0} (suc i) p = reconsider p against sucNotLessThanZero
 _isWithinRange_ {suc n} (suc i) p = suc (i isWithinRange (≤-pred p))
+
+consIsNotEmpty : {a : Set} → {x : a} → {xs : List a} → x ∷ xs ≢ []
+consIsNotEmpty ()
+
+lastOf_whichExistsBecause_ : {a : Set} → (xs : List a) → xs ≢ [] → a
+lastOf_whichExistsBecause_ [] p = reconsider p because refl
+lastOf_whichExistsBecause_ (x ∷ []) p = x
+lastOf_whichExistsBecause_ (x ∷ y ∷ ys) p = lastOf (y ∷ ys) whichExistsBecause consIsNotEmpty
+
+elementsOf_whichSatisfy_ : {a : Set} → {p : propertyOf a} → List a → Decidable p → List a
+elementsOf_whichSatisfy_ [] p = []
+elementsOf_whichSatisfy_ (x ∷ xs) p =
+  let ys = elementsOf xs whichSatisfy p in
+  checkWhether (p x)
+    (λ px → x ∷ ys)
+    (λ otherwise → ys)
+
+_*and*_ : {p : Set} → {q : Set} → Dec p → Dec q → Dec (p × q)
+_*and*_ {p} {q} (no ¬p) _ = no (λ pq → reconsider (proj₁ pq) against ¬p)
+_*and*_ {p} {q} (yes _) (no ¬q) = no (λ pq → reconsider (proj₂ pq) against ¬q)
+_*and*_ {p} {q} (yes yp) (yes yq) = yes (yp , yq)
+
+finitelyCountUpTo : (n : ℕ) → List (Fin (suc n))
+finitelyCountUpTo 0 = zero ∷ []
+finitelyCountUpTo (suc n) = zero ∷ map suc (finitelyCountUpTo n)
